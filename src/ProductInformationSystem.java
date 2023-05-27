@@ -5,16 +5,18 @@ import java.util.InputMismatchException;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
+
+//Awadh almalki | 441006300 | Grup3 | s441006300@st.uqu.edu.sa
 public class ProductInformationSystem {
 
     //initializing the java Database connectivity
-    private static final String JDBC = "com.mysql.cj.jdbc.Driver";
+    private static final String JDBC = "";
     //initializing the java Database url
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/ProductsDB_almalki";
+    private static final String DB_URL = "";
     //initializing mysql user name
     private static final String USER = "root";
     //initializing mysql password
-    private static final String PASSWORD = "awdAWD4775";
+    private static final String PASSWORD = "";
 
     //initializing the connection
     static Connection con = null;
@@ -53,8 +55,6 @@ public class ProductInformationSystem {
                         System.out.println("finishing…");
                         exit = true; //make exit true to end the program
                         break;
-                    case 5:
-                        readAllProduct(1,"");
                     default: //if the user enter another number
                         System.out.println("Invalid Option, try again\n\n");
                         break;
@@ -95,7 +95,7 @@ public class ProductInformationSystem {
             }
             //if the type number
             else if (!type.matches("[a-zA-Z ]+")){
-                System.out.println("Type must not contains numbers!\n");
+                System.out.println("Type must not contains numbers or signs!\n");
             }
             //if the type is correct, then the loop
             else{
@@ -168,7 +168,7 @@ public class ProductInformationSystem {
                 count = sc.nextInt();
                 //if the count is less than 1 or grater than 1m
                 if (count > 1000000 || count < 1) {
-                    System.out.println("count must be not less than 1 and not more than 100000");
+                    System.out.println("count must be not less than 1 and not more than 1000000");
                 }
                 else {
                     //if the count is correct, break the loop
@@ -219,7 +219,6 @@ public class ProductInformationSystem {
             if(k == 1){//if the data pushed successfully
                 System.out.println("product added successfully");
                 //print the table
-                readAllProduct(1,"");
             }else{//if the data does not pushed successfully
                 System.out.println("Couldn't add the product!");
             }
@@ -251,13 +250,11 @@ public class ProductInformationSystem {
 
 
     //read all product from database method
-    //this method accept two parameter, index and query,
-    //index : if the index is 1 then i want just to print all data in the table
-    //index : if the index is 2 then i call this method from searchProduct method
-    //query : if the query is empty then i want just to print all data in the table
+    //this method accept one parameter, query,
+    //query : if the query is empty, then i want just to print all data in the table
     //query : if the query is not empty, then i call this method from searchProduct method
     //i do all of that to make the code easy, not repeated, and readable, so this is the way i found
-    private static void readAllProduct(int index,String query) {
+    private static void readAllProduct(String query) {
 
 
         try {
@@ -266,11 +263,13 @@ public class ProductInformationSystem {
             con = DriverManager.getConnection(DB_URL,USER,PASSWORD);
             String sqlQuery;
 
-            //if index = 1, means regular print of the data.
-            //the other condition is to make sure if the user use the search option and type nothing or spaces
-            if((index == 1) || (query.replaceAll("\\s","").length() == 0)) {
+            //to make sure if the user use the search option and type nothing or spaces
+            if(query.replaceAll("\\s","").length() == 0) {
+                //the display all data in the table
                 sqlQuery = "SELECT * FROM productstbl_awadh";
             }else{
+                //if the user enter a letters to search
+                //then make the sqlQuery contains user search word
                 sqlQuery = query;
             }
 
@@ -281,16 +280,18 @@ public class ProductInformationSystem {
             //get the metadata, so we can read the column names
             ResultSetMetaData metaData = res.getMetaData();
 
-            //check if the user chose a search option and the no matchs found,
-            //the other condition is to check if the user chose the search option and enter empty input and the database is empty,then it should print
-            //(the database is empty) not (Couldn't find)
-            if ((!res.isBeforeFirst() && (index == 2)) && !(query.replaceAll("\\s","").length() == 0)){
+            //check if the user chose a search option and no matchs found,
+            //the first condition is to check if the user enter an empty input and the resultSet is empty
+            //the second condition is to chech if the user enter a word and the resultSet is empty
+            boolean isThereData = res.next();
+            if ((!isThereData && !(query.replaceAll("\\s","").length() == 0))){
                 System.out.println("Couldn't find any related data of your search!");
                 return;
-            } else if (!res.isBeforeFirst() && (index == 1)) { //check if the database is empty
-                System.out.println("The database is empty!");
+            }else if ((!isThereData) && (query.replaceAll("\\s","").length() == 0)) {
+                System.out.println("Couldn't find any related data of your search!");
                 return;
             }
+
             //the number of column in the table
             int numberOfColumn = metaData.getColumnCount();
 
@@ -324,7 +325,7 @@ public class ProductInformationSystem {
             }
 
 
-            //close the resultset
+            //close the resultset because we use it before, so when we execute it again the cursor will be in the first cell
             res.close();
             //execute the query and save the result to the resultset
             res = ps.executeQuery();
@@ -349,20 +350,32 @@ public class ProductInformationSystem {
             //while there is data in the resultset
             while (res.next()) {
                 for (int i = 1; i <= numberOfColumn; i++) {
-                    //get the value of cell at 0
+                    //get the value of cell at i
                     String value = res.getString(i);
                     System.out.printf("| %-"+ (columnLength[i - 1] + 2) + "s", value);
                 }
                 System.out.println("|");
             }
+            System.out.println();
+
+            ps.close();
+            res.close();
+            con.close();
 
 
 
         } catch (SQLException | ClassNotFoundException e) {// catch the error from database connection and for Class.forName loading
             System.out.println("Couldn't read the products from the database!");
+            try { //force closing the connection
+                if (con != null) {
+                    con.close();
+                }
+            } catch (SQLException ex) {//catch the error and print it
+                ex.printStackTrace();
+            }
         }
 
-    }
+        }
 
 
 
@@ -381,17 +394,17 @@ public class ProductInformationSystem {
             searchedWord = sc.nextLine();
 
             String sqlQuery;
-            //if the user enter an empty input or a space input
+            //if the user enter an empty input or a spaced input
             if(searchedWord.replaceAll("\\s","").length() == 0){
                 //make the sqlquery as nurmal, to show all field
                 sqlQuery = "SELECT * FROM productstbl_awadh";
-                //call readallproduct method with appropriate index and
-                readAllProduct(1,"");
+                //call readallproduct method with appropriate par
+                readAllProduct("");
             }else {
                 // select * from productstbl_awadh where type like %TV% or model like %TV%;
                 sqlQuery = "SELECT * FROM productstbl_awadh WHERE Type LIKE '%"+searchedWord+"%' OR model LIKE '%"+searchedWord+"%'";
                 //push the sqlquery to readallproduct method with appropriate index
-                readAllProduct(2,sqlQuery);
+                readAllProduct(sqlQuery);
             }
 
 
@@ -414,44 +427,82 @@ public class ProductInformationSystem {
         int productID;
         boolean end = false;
         while(!end) {
-        try {
+
+
+            //this try block is to check if the whole database have a data or not, if not then print : not data. and then close the method.
+            //the reason of doing this is when the database is empty and the user tries to delete a product, the user will be in infinite loop because there is no data to delete
+//            try {
+//                String sqlQuery = "SELECT * FROM productstbl_awadh";
+//
+//                con = DriverManager.getConnection(DB_URL, USER, PASSWORD);
+//                PreparedStatement ps = con.prepareStatement(sqlQuery);
+//
+//                ResultSet res = ps.executeQuery();
+//
+//                if (!res.next()) {// if there is no data in the dataset, print to the user: there is no data, and close the method
+//                    System.out.println("There is no data in database!");
+//                    con.close();
+//                    res.close();
+//                    return;
+//                }
+//            }catch (SQLException e) {
+//                System.out.println("Something went wrong, try again!");
+//            }
+
+
+
+
+            try {
 
 
                 System.out.println("Enter the ID of the product you want to delete: ");
                 productID = sc.nextInt();
 
+                //get the id that the user ask for
+                //Here we'll use the select query to check if the ID is exist or not
                 String sqlQuery = "SELECT * FROM productstbl_awadh WHERE id = ?";
 
-//                Class.forName(JDBC);
                 con = DriverManager.getConnection(DB_URL, USER, PASSWORD);
                 PreparedStatement ps = con.prepareStatement(sqlQuery);
 
                 ps.setInt(1, productID);
 
-                ResultSet rs = ps.executeQuery();
+                ResultSet res = ps.executeQuery();
 
-                if (!rs.next()) {
+                if (!res.next()) {// if there is no data in the dataset, print to the user: there is no product with ID #
                     System.out.println("There is no product with ID " + productID);
+                    System.out.println();
+                    break;
                 } else {
+                    //clear the input buffer
                     sc.nextLine();
                     System.out.println("Are you sure you want to delete this product ?(Y/N)");
                     String conf = sc.nextLine().toLowerCase();
 
-                    if (conf.equals("y")) {
-                        String sqlQueryDelete = "DELETE FROM productstbl_awadh WHERE id = ?";
-                        ps = con.prepareStatement(sqlQueryDelete);
-                        ps.setInt(1, productID);
-                        int k = ps.executeUpdate();
+                    //if the user does not enter neither y nor n, then make him in loop until he answer
+                    while(!end) {
+                        if (conf.equals("y")) {
+                            String sqlQueryDelete = "DELETE FROM productstbl_awadh WHERE id = ?";
+                            ps = con.prepareStatement(sqlQueryDelete);
+                            ps.setInt(1, productID);
+                            int k = ps.executeUpdate();
 
-                        if (k == 1) {
-                            System.out.println("product " + productID + " deleted successfully");
+                            //k=1 means success
+                            if (k == 1) {
+                                System.out.println("product " + productID + " deleted successfully");
+                                end = true;
+                            } else {
+                                System.out.println("Couldn't delete the product");
+                            }
+                        } else if (conf.equals("n")) {
+                            System.out.println("Delete are canceled");
                             end = true;
                         } else {
-                            System.out.println("Couldn't delete the product");
+                            //if the user does not answer with n or y
+                            System.out.println("Are you sure you want to delete this product ?(Y/N)");
+                            conf = sc.nextLine().toLowerCase();
+
                         }
-                    } else if (conf.equals("n")) {
-                        System.out.println("Delete are canceled");
-                        end = true;
                     }
                 }
 
@@ -464,6 +515,7 @@ public class ProductInformationSystem {
     }
     }
 
+    //print menu
     public static void printOptions(){
         System.out.println("Welcome To Products Information System By: ");
         System.out.println("Awadh almalki | 441006300 | Grup3 | s441006300@st.uqu.edu.sa");
@@ -473,5 +525,5 @@ public class ProductInformationSystem {
         System.out.println("3 --> Delete a Product");
         System.out.println("4 --> Exit");
     }
-
+//01
 }
