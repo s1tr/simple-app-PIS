@@ -6,7 +6,7 @@ import java.util.Scanner;
 import java.util.regex.Pattern;
 
 
-//Awadh almalki | 441006300 | Grup3 | s441006300@st.uqu.edu.sa
+
 public class ProductInformationSystem {
 
     //initializing the java Database connectivity
