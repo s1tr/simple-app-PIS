@@ -6,7 +6,7 @@ import java.util.Scanner;
 import java.util.regex.Pattern;
 
 
-
+//s1tr
 public class ProductInformationSystem {
 
     //initializing the java Database connectivity
